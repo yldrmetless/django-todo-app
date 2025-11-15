@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+env/
+
+# Environment files
+.env
+*.env
+
+# Django stuff
+db.sqlite3
+media/
+staticfiles/
+
+# IDE / OS garbage
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Byte-compiled / cache
+*.log
