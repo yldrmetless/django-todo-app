@@ -347,24 +347,24 @@ def test_tasks_list_all_filters_combined_for_admin():
     now = timezone.now()
 
     # ---- Test verileri ----
-    task_completed = task_list(
+    task_list(
         owner=admin_user,
         title="Completed Task",
         is_completed=True,
         due_date=now,
     )
-    task_incomplete = task_list(
+    task_list(
         owner=admin_user,
         title="Incomplete Task",
         is_completed=False,
         due_date=now,
     )
-    task_old = task_list(
+    task_list(
         owner=admin_user,
         title="Old Task",
         due_date=now - timedelta(days=7),
     )
-    task_future = task_list(
+    task_list(
         owner=admin_user,
         title="Future Task",
         due_date=now + timedelta(days=7),

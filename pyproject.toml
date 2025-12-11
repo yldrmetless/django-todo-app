@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 88
-target-version = ["py311"]
+target-version = ["py38"]
 include = '\.pyi?$'
 exclude = '''
 (
@@ -21,7 +21,7 @@ line_length = 88
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py38"
 src = ["."]
 exclude = [
   "venv",

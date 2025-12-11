@@ -1,6 +1,14 @@
 from django.urls import path
 
-from .views import *
+from .views import (
+    AdminDashboardView,
+    CreateTaskView,
+    EmployeeUserListView,
+    TaskApproveOrRejectView,
+    TaskCompleteRequestView,
+    TaskDetailView,
+    TasksListView,
+)
 
 urlpatterns = [
     path("employee-list/", EmployeeUserListView.as_view(), name="employee-list"),
