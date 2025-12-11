@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from todo.pagination import PostPagination
 from .models import Task
 from .serializers import TaskSerializer
-from accounts.permissions import IsAdminUser
+from accounts.permissions import IsAdminUser, IsTododminUser
 from django.db.models import Q
 from django.utils import timezone
 from accounts.models import User
@@ -40,7 +40,7 @@ class EmployeeUserListView(APIView):
 
 
 class CreateTaskView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsTododminUser]
 
     def post(self, request, *args, **kwargs):
         title = request.data.get("title")
@@ -101,18 +101,34 @@ class TasksListView(APIView):
     pagination_class = PostPagination
 
     def get(self, request, *args, **kwargs):
-
         user = request.user
 
-        if user.user_type == "admin":
-            tasks = Task.objects.filter(is_deleted=False).order_by('-created_at')
+        base_qs = Task.objects.filter(is_deleted=False)
 
+        if user.user_type == "admin":
+            tasks = base_qs
         else:
-            tasks = Task.objects.filter(
-                is_deleted=False
-            ).filter(
+            tasks = base_qs.filter(
                 Q(owner=user) | Q(assigned_user=user)
-            ).order_by('-created_at')
+            )
+
+        is_completed_param = request.query_params.get("is_completed")
+        if is_completed_param is not None:
+            value = is_completed_param.lower()
+            if value in ["true", "1", "yes"]:
+                tasks = tasks.filter(is_completed=True)
+            elif value in ["false", "0", "no"]:
+                tasks = tasks.filter(is_completed=False)
+
+        due_date_start = request.query_params.get("due_date_start")
+        due_date_end = request.query_params.get("due_date_end")
+
+        if due_date_start:
+            tasks = tasks.filter(due_date__gte=due_date_start)
+        if due_date_end:
+            tasks = tasks.filter(due_date__lte=due_date_end)
+
+        tasks = tasks.order_by("-created_at")
 
         serializer = TaskSerializer(tasks, many=True)
 
@@ -120,9 +136,9 @@ class TasksListView(APIView):
             {
                 "status": 200,
                 "message": "Tasks retrieved successfully.",
-                "response": serializer.data
+                "response": serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 

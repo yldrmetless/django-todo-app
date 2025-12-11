@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 USER_TYPE_CHOICES = (
     ('admin', 'Admin'),
+    ('todo admin', 'Employee'),
     ('employee', 'Employee'),
 )
 
