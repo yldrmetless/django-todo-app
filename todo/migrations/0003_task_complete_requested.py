@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('todo', '0002_task_assigned_user'),
+        ("todo", "0002_task_assigned_user"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='task',
-            name='complete_requested',
+            model_name="task",
+            name="complete_requested",
             field=models.BooleanField(default=False),
         ),
     ]

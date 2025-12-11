@@ -8,3 +8,6 @@ djangorestframework-simplejwt[blacklist]==5.3.1
 pytest
 pytest-django
 python-dotenv==1.0.1
+pytest-cov==5.0.0
+black==24.8.0
+isort==5.13.2

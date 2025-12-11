@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('todo', '0003_task_complete_requested'),
+        ("todo", "0003_task_complete_requested"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='task',
-            name='reason_for_reject',
+            model_name="task",
+            name="reason_for_reject",
             field=models.JSONField(blank=True, null=True),
         ),
     ]

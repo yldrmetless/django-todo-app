@@ -1,23 +1,24 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from todo.pagination import PostPagination
-from .models import Task
-from .serializers import TaskSerializer
-from accounts.permissions import IsAdminUser, IsTododminUser
 from django.db.models import Q
 from django.utils import timezone
-from accounts.models import User
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from accounts.models import User
+from accounts.permissions import IsAdminUser, IsTododminUser
+from todo.pagination import PostPagination
+
+from .models import Task
+from .serializers import TaskSerializer
 
 
 class EmployeeUserListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-    
+
     def get(self, request, *args, **kwargs):
 
-        employees = User.objects.filter(user_type='employee', is_active=True)
+        employees = User.objects.filter(user_type="employee", is_active=True)
 
         employees_data = [
             {
@@ -33,9 +34,9 @@ class EmployeeUserListView(APIView):
             {
                 "status": 200,
                 "message": "Employee users retrieved successfully.",
-                "response": employees_data
+                "response": employees_data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
@@ -52,7 +53,7 @@ class CreateTaskView(APIView):
         if not title:
             return Response(
                 {"error": "title field cannot be empty."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # assigned_user validation
@@ -63,7 +64,7 @@ class CreateTaskView(APIView):
             except User.DoesNotExist:
                 return Response(
                     {"error": "assigned_user not found."},
-                    status=status.HTTP_404_NOT_FOUND
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
         # ===== CREATE TASK =====
@@ -72,7 +73,7 @@ class CreateTaskView(APIView):
             title=title,
             description=description,
             due_date=due_date,
-            assigned_user=assigned_user
+            assigned_user=assigned_user,
         )
 
         # ===== RESPONSE =====
@@ -86,15 +87,18 @@ class CreateTaskView(APIView):
                     "description": task.description,
                     "due_date": task.due_date,
                     "assigned_user": assigned_user_id,
-                    "assigned_user_name": f"{assigned_user.first_name} {assigned_user.last_name}" if assigned_user else None,
+                    "assigned_user_name": (
+                        f"{assigned_user.first_name} {assigned_user.last_name}"
+                        if assigned_user
+                        else None
+                    ),
                     "is_completed": task.is_completed,
                     "created_at": task.created_at,
-                }
+                },
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
 
-    
 
 class TasksListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -108,9 +112,7 @@ class TasksListView(APIView):
         if user.user_type == "admin":
             tasks = base_qs
         else:
-            tasks = base_qs.filter(
-                Q(owner=user) | Q(assigned_user=user)
-            )
+            tasks = base_qs.filter(Q(owner=user) | Q(assigned_user=user))
 
         is_completed_param = request.query_params.get("is_completed")
         if is_completed_param is not None:
@@ -142,8 +144,6 @@ class TasksListView(APIView):
         )
 
 
-
-
 class TaskDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -152,8 +152,7 @@ class TaskDetailView(APIView):
             task = Task.objects.get(id=id, owner=request.user, is_deleted=False)
         except Task.DoesNotExist:
             return Response(
-                {"detail": "Task not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         task_data = {
@@ -171,9 +170,9 @@ class TaskDetailView(APIView):
             {
                 "status": 200,
                 "message": "Task retrieved successfully.",
-                "response": task_data
+                "response": task_data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
     def patch(self, request, id, *args, **kwargs):
@@ -181,14 +180,13 @@ class TaskDetailView(APIView):
             task = Task.objects.get(id=id, owner=request.user, is_deleted=False)
         except Task.DoesNotExist:
             return Response(
-                {"detail": "Task not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND
             )
-        
+
         if request.user.user_type != "admin":
             return Response(
                 {"detail": "You do not have permission to update this task."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         data = request.data
@@ -202,7 +200,7 @@ class TaskDetailView(APIView):
         if "title" in data and (title is None or title == ""):
             return Response(
                 {"error": "title field cannot be empty."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if title is not None:
@@ -237,11 +235,10 @@ class TaskDetailView(APIView):
             {
                 "status": 200,
                 "message": "Task updated successfully.",
-                "response": updated_data
+                "response": updated_data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
 
 
 class TaskCompleteRequestView(APIView):
@@ -254,27 +251,26 @@ class TaskCompleteRequestView(APIView):
         if user.user_type != "employee":
             return Response(
                 {"detail": "Only employees can request completion."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
             task = Task.objects.get(id=id, is_deleted=False)
         except Task.DoesNotExist:
             return Response(
-                {"detail": "Task not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         if task.assigned_user != user:
             return Response(
                 {"detail": "You are not assigned to this task."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         if task.complete_requested:
             return Response(
                 {"detail": "Completion request already submitted."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         task.complete_requested = True
@@ -289,12 +285,10 @@ class TaskCompleteRequestView(APIView):
                     "title": task.title,
                     "assigned_user": f"{task.assigned_user.first_name} {task.assigned_user.last_name}",
                     "complete_requested": task.complete_requested,
-                }
+                },
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
-    
-
 
 
 class TaskApproveOrRejectView(APIView):
@@ -304,6 +298,7 @@ class TaskApproveOrRejectView(APIView):
       - complete_requested = False + reason göndererek isteği reddedebilir
         ve reason_for_reject JSONField'ına {id, reason} formatında eklenir.
     """
+
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, id, *args, **kwargs):
@@ -312,21 +307,20 @@ class TaskApproveOrRejectView(APIView):
         if user.user_type != "admin":
             return Response(
                 {"detail": "Only admins can approve or reject completion requests."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         try:
             task = Task.objects.get(id=id, is_deleted=False)
         except Task.DoesNotExist:
             return Response(
-                {"detail": "Task not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Task not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         if task.owner != user:
             return Response(
                 {"detail": "You are not the owner of this task."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         data = request.data
@@ -350,16 +344,18 @@ class TaskApproveOrRejectView(APIView):
                         "is_completed": task.is_completed,
                         "complete_requested": task.complete_requested,
                         "reason_for_reject": task.reason_for_reject,
-                    }
+                    },
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         if complete_requested is False:
             if not reason:
                 return Response(
-                    {"detail": "reason field is required when rejecting completion request."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "detail": "reason field is required when rejecting completion request."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             existing_reasons = task.reason_for_reject or []
@@ -369,10 +365,7 @@ class TaskApproveOrRejectView(APIView):
 
             new_id = len(existing_reasons) + 1
 
-            existing_reasons.append({
-                "id": new_id,
-                "reason": reason
-            })
+            existing_reasons.append({"id": new_id, "reason": reason})
 
             task.reason_for_reject = existing_reasons
             task.complete_requested = False
@@ -389,9 +382,9 @@ class TaskApproveOrRejectView(APIView):
                         "is_completed": task.is_completed,
                         "complete_requested": task.complete_requested,
                         "reason_for_reject": task.reason_for_reject,
-                    }
+                    },
                 },
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         return Response(
@@ -401,12 +394,8 @@ class TaskApproveOrRejectView(APIView):
                     "or 'complete_requested': false with 'reason' to reject."
                 )
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    
-
-
-
 
 
 class AdminDashboardView(APIView):
@@ -415,7 +404,7 @@ class AdminDashboardView(APIView):
     dashboard özeti döner.
     İsteğe bağlı olarak ?is_rejected=true|false filtresi ile task listesi dönebilir.
     """
-    
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -424,7 +413,7 @@ class AdminDashboardView(APIView):
         if user.user_type != "admin":
             return Response(
                 {"detail": "Only admins can access this dashboard."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         qs = Task.objects.filter(owner=user, is_deleted=False)
@@ -437,12 +426,8 @@ class AdminDashboardView(APIView):
 
             if is_rejected_param == "true":
                 filtered = qs.filter(
-                    is_completed=False,
-                    complete_requested=False
-                ).filter(
-                    Q(reason_for_reject__isnull=False) |
-                    Q(due_date__lt=now)
-                )
+                    is_completed=False, complete_requested=False
+                ).filter(Q(reason_for_reject__isnull=False) | Q(due_date__lt=now))
 
                 tasks_data = [
                     {
@@ -464,7 +449,7 @@ class AdminDashboardView(APIView):
                         "message": "Rejected / overdue tasks retrieved successfully.",
                         "response": tasks_data,
                     },
-                    status=status.HTTP_200_OK
+                    status=status.HTTP_200_OK,
                 )
 
             elif is_rejected_param == "false":
@@ -490,21 +475,20 @@ class AdminDashboardView(APIView):
                         "message": "Completed tasks retrieved successfully.",
                         "response": tasks_data,
                     },
-                    status=status.HTTP_200_OK
+                    status=status.HTTP_200_OK,
                 )
 
             else:
                 return Response(
                     {"detail": "Invalid value for is_rejected. Use 'true' or 'false'."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         total_tasks = qs.count()
         completed_tasks = qs.filter(is_completed=True).count()
         active_tasks = qs.filter(is_completed=False).count()
         pending_approval_tasks = qs.filter(
-            complete_requested=True,
-            is_completed=False
+            complete_requested=True, is_completed=False
         ).count()
 
         total_rejections = 0
@@ -531,5 +515,5 @@ class AdminDashboardView(APIView):
                 "message": "Admin dashboard data retrieved successfully.",
                 "response": data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )

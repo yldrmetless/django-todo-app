@@ -1,14 +1,15 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from .serializers import *
-from .models import *
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db.models import Q
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import *
+from .serializers import *
+
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -35,11 +36,12 @@ class RegisterView(APIView):
             email=email,
             first_name=first_name,
             last_name=last_name,
-            password=password
+            password=password,
         )
 
-        return Response({"message": "User created successfully."}, status=status.HTTP_201_CREATED)
-    
+        return Response(
+            {"message": "User created successfully."}, status=status.HTTP_201_CREATED
+        )
 
 
 class LoginView(APIView):
@@ -55,21 +57,29 @@ class LoginView(APIView):
 
         user = User.objects.filter(Q(username=username) | Q(email=username)).first()
         if not user or not user.check_password(password):
-            return Response({"detail": "Geçersiz kimlik bilgileri."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Geçersiz kimlik bilgileri."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
 
-        expire_minutes = int(getattr(settings, "SIMPLE_JWT", {}).get(
-            "ACCESS_TOKEN_LIFETIME"
-        ).total_seconds() // 60)
+        expire_minutes = int(
+            getattr(settings, "SIMPLE_JWT", {})
+            .get("ACCESS_TOKEN_LIFETIME")
+            .total_seconds()
+            // 60
+        )
 
-        return Response({
-            "refresh": str(refresh),
-            "access": str(access),
-            "expire_minutes": expire_minutes
-        }, status=status.HTTP_200_OK)
-    
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(access),
+                "expire_minutes": expire_minutes,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class LogoutView(APIView):
@@ -81,6 +91,10 @@ class LogoutView(APIView):
             token = RefreshToken(refresh_token)
             token.blacklist()  # ← logout burada gerçekleşiyor
         except Exception:
-            return Response({"detail": "Geçersiz token."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Geçersiz token."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response({"message": "Çıkış başarılı."}, status=status.HTTP_205_RESET_CONTENT)
+        return Response(
+            {"message": "Çıkış başarılı."}, status=status.HTTP_205_RESET_CONTENT
+        )

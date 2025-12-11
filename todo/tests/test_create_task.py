@@ -1,9 +1,11 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from rest_framework.test import APIClient
 from django.utils import timezone
-from datetime import timedelta
+from rest_framework.test import APIClient
+
 from todo.models import Task
 
 # Bu dosyadaki TÜM testler DB kullanabilir:
@@ -43,6 +45,7 @@ def create_admin_user():
         user_type="todo admin",
     )
 
+
 def get_authenticated_client(user=None):
     """
     DRF APIClient oluştur ve kullanıcıyı authenticated et.
@@ -53,7 +56,6 @@ def get_authenticated_client(user=None):
     client = APIClient()
     client.force_authenticate(user=user)
     return client
-
 
 
 def test_create_task_success_with_admin_user():
@@ -131,7 +133,6 @@ def test_create_task_empty_title_returns_400():
     assert Task.objects.count() == 0
 
 
-
 def test_create_task_with_invalid_assigned_user_returns_404():
     """
     Senaryo:
@@ -166,11 +167,8 @@ def test_create_task_with_invalid_assigned_user_returns_404():
     assert data["error"] == "assigned_user not found."
     print("RESPONSE:", response.status_code, response.json())
 
-
     # DB kontrol: Task oluşmamalı
     assert Task.objects.count() == 0
-
-
 
 
 # def create_employee_user():
@@ -184,6 +182,7 @@ def test_create_task_with_invalid_assigned_user_returns_404():
 #         password="employeepassword123",
 #         user_type="employee",
 #     )
+
 
 def create_employee_user():
     """
@@ -234,7 +233,6 @@ def test_create_task_forbidden_for_employee_user():
     assert Task.objects.count() == 0
 
 
-
 def test_create_task_with_valid_assigned_user_success():
     """
     Senaryo:
@@ -273,7 +271,10 @@ def test_create_task_with_valid_assigned_user_success():
     assert resp["title"] == payload["title"]
     assert resp["description"] == payload["description"]
     assert resp["assigned_user"] == employee_user.id
-    assert resp["assigned_user_name"] == f"{employee_user.first_name} {employee_user.last_name}"
+    assert (
+        resp["assigned_user_name"]
+        == f"{employee_user.first_name} {employee_user.last_name}"
+    )
     assert resp["is_completed"] is False
 
     assert Task.objects.count() == 1
@@ -282,8 +283,6 @@ def test_create_task_with_valid_assigned_user_success():
     assert task.description == payload["description"]
     assert task.owner == admin_user
     assert task.assigned_user == employee_user
-
-
 
 
 def task_list(owner, title, is_completed=False, due_date=None, assigned_user=None):
@@ -300,7 +299,6 @@ def task_list(owner, title, is_completed=False, due_date=None, assigned_user=Non
         is_completed=is_completed,
         due_date=due_date,
     )
-
 
 
 def test_tasks_list_all_filters_combined_for_admin():
@@ -320,19 +318,19 @@ def test_tasks_list_all_filters_combined_for_admin():
 
     3) Aşağıdaki filtreler API üzerinden tek tek test edilir:
 
-    a) /tasks-list/?is_completed=true  
+    a) /tasks-list/?is_completed=true
         → Sadece completed task gelmeli
 
-    b) /tasks-list/?is_completed=false  
+    b) /tasks-list/?is_completed=false
         → Sadece incomplete task gelmeli
 
-    c) /tasks-list/?due_date_start=...  
+    c) /tasks-list/?due_date_start=...
         → Verilen tarihten SONRAKİ task'lar gelmeli (old task gelmez)
 
-    d) /tasks-list/?due_date_end=...  
+    d) /tasks-list/?due_date_end=...
         → Verilen tarihten ÖNCEKİ task'lar gelmeli (future task gelmez)
 
-    e) /tasks-list/?due_date_start=...&due_date_end=...  
+    e) /tasks-list/?due_date_start=...&due_date_end=...
         → Belirli tarih aralığındaki task'lar gelmeli
             (hem old hem future hariç)
 
@@ -374,7 +372,6 @@ def test_tasks_list_all_filters_combined_for_admin():
 
     url = reverse("tasks-list")
 
-
     response = client.get(url, {"is_completed": "true"}, format="json")
     assert response.status_code == 200
     titles = [item["title"] for item in response.json()["response"]]
@@ -408,7 +405,9 @@ def test_tasks_list_all_filters_combined_for_admin():
     start = (now - timedelta(days=1)).isoformat()
     end = (now + timedelta(days=1)).isoformat()
 
-    response = client.get(url, {"due_date_start": start, "due_date_end": end}, format="json")
+    response = client.get(
+        url, {"due_date_start": start, "due_date_end": end}, format="json"
+    )
     assert response.status_code == 200
 
     titles = [item["title"] for item in response.json()["response"]]

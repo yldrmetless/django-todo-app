@@ -1,19 +1,18 @@
 from django.db import models
+
 from accounts.models import User
+
+
 # Create your models here.
 class Task(models.Model):
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="user_tasks"
-    )
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_tasks")
 
     assigned_user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         related_name="assigned_tasks",
         blank=True,
-        null=True
+        null=True,
     )
 
     title = models.CharField(max_length=255)
